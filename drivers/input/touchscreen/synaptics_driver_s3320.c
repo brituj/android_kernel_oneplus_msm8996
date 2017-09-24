@@ -190,7 +190,7 @@ static struct workqueue_struct *synaptics_wq = NULL;
 static struct workqueue_struct *get_base_report = NULL;
 static struct proc_dir_entry *prEntry_tp = NULL;
 
-
+static bool in_pocket;
 #ifdef SUPPORT_GESTURE
 static uint32_t clockwise;
 static uint32_t gesture;
@@ -1121,6 +1121,9 @@ static void gesture_judge(struct synaptics_ts_data *ts)
 		F12_2D_DATA04,gesture_buffer[0],(F51_CUSTOM_DATA04+0x18),regswipe);
 	ret = i2c_smbus_write_byte_data(ts->client, 0xff, 0x00);
 	gesture_sign = gesture_buffer[0];
+	if(in_pocket){
+		return;
+	}
 	//detect the gesture mode
 	switch (gesture_sign) {
 		case DTAP_DETECT:
@@ -4222,13 +4225,7 @@ static int fb_notifier_callback(struct notifier_block *self, unsigned long event
 
 void synaptics_s3320_enable_global(bool enabled)
 {
-	if (ts_g == NULL)
-		return;
-
-	if (enabled)
-		touch_enable(ts_g);
-	else
-		touch_disable(ts_g);
+	in_pocket = !enabled;
 }
 
 static int __init tpd_driver_init(void)
